@@ -5,6 +5,13 @@ on: [push, pull_request]
 jobs:
   integration-test:
     name: Integration Tests
+    env:
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: users
+      DB_DRIVER: postgres
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -53,10 +60,3 @@ jobs:
       # Runs go test ./... against postgres container
       - name: Test Postgres
         run: make test
-        env:
-          DB_USER: postgres
-          DB_PASSWORD: password
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_NAME: users
-          DB_DRIVER: postgres
