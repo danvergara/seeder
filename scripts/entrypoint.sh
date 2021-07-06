@@ -10,5 +10,9 @@ done
 
 echo "PostgreSQL started"
 
+echo "Running the migrations against the database"
 migrate -source file://db/migrations -database postgres://postgres:password@db:5432/users?sslmode=disable up
+
+echo "Seeding the database"
+go run db/main.go
 
