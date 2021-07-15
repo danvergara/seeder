@@ -44,6 +44,11 @@ int-test:
 migrate:
 	migrate -source file://db/migrations -database "postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" up
 
+.PHONY: run
+## run: Runs the application
+run: build
+	./seeder
+
 .PHONY: help
 ## help: Prints this help message
 help:
