@@ -13,33 +13,47 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+
+// Package cmd provides all the commands of the cli tool.
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
-
-	"github.com/spf13/viper"
 )
 
-var cfgFile string
+// var path string.
+var path string
+
+// NewRootCmd returns the root command.
+func NewRootCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "seeder",
+		Short: "Database seeds. ClI and Golang library",
+		Long: `Seeder is a ClI tool and Golang library that helps to
+seeds databases using golang code. ORM or SQL driver agnostic.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			var out bytes.Buffer
+
+			c := exec.Command("go", "run", fmt.Sprint(path, "/", "main.go"))
+			c.Stdout = &out
+
+			if err := c.Run(); err != nil {
+				return err
+			}
+
+			return nil
+		},
+	}
+}
 
 // rootCmd represents the base command when called without any subcommands.
-var rootCmd = &cobra.Command{
-	Use:   "seeder",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
-}
+var rootCmd = NewRootCmd()
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
@@ -48,39 +62,37 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
+	// cobra.OnInitialize(initConfig)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.seeder.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.seeder.yaml)")
+	dir, _ := os.Getwd()
+	rootCmd.Flags().StringVarP(&path, "path", "p", filepath.Join(dir, "db"), "")
 }
 
 // initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-
-		// Search config in home directory with name ".seeder" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName(".seeder")
-	}
-
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
-	}
-}
+// func initConfig() {
+// if cfgFile != "" {
+// // Use config file from the flag.
+// viper.SetConfigFile(cfgFile)
+// } else {
+// // Find home directory.
+// home, err := os.UserHomeDir()
+// cobra.CheckErr(err)
+//
+// // Search config in home directory with name ".seeder" (without extension).
+// viper.AddConfigPath(home)
+// viper.SetConfigType("yaml")
+// viper.SetConfigName(".seeder")
+// }
+//
+// viper.AutomaticEnv() // read in environment variables that match
+//
+// // If a config file is found, read it in.
+// if err := viper.ReadInConfig(); err == nil {
+// fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+// }
+// }

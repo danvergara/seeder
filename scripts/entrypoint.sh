@@ -12,6 +12,3 @@ echo "PostgreSQL started"
 
 echo "Running the migrations against the database"
 make migrate
-
-echo "Seeding the database"
-go run db/main.go
