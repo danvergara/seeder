@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/danvergara/seeder"
 	"github.com/danvergara/seeder/db/seeds"
-	"github.com/danvergara/seeder/pkg/seeder"
 	"github.com/jmoiron/sqlx"
 
 	// postgres driver.
