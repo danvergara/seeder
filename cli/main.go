@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/danvergara/seeder/cmd"
+import "github.com/danvergara/seeder/cli/cmd"
 
 func main() {
 	cmd.Execute()
