@@ -1,4 +1,4 @@
-# readme
+# seeder
 
 Database seeds. CLI and Golang library.
 
