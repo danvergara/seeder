@@ -18,13 +18,34 @@ Seeder is an agnostic cli and library intended to seeds databases using Go code.
 
 ## Installation
 
-CLI:
+### CLI:
+### Homebrew
 
-- [Precompiled binaries](https://github.com/danvergara/seeder/releases) for supported
-operating systems are available.
+It works with Linux, too.
 
+```
+$ brew install danvergara/tools/seeder
+```
 
-Library:
+Or
+
+```
+$ brew tap danvergara/tools
+$ brew install seeder
+```
+
+### Binary Release (Linux/OSX/Windows)
+You can manually download a binary release from [the release page](https://github.com/danvergara/seeder/releases).
+
+Automated install/update, don't forget to always verify what you're piping into bash:
+
+```sh
+curl https://raw.githubusercontent.com/danvergara/seeder/master/scripts/install_update_linux.sh | bash
+```
+
+The script installs downloaded binary to `/usr/local/bin` directory by default, but it can be changed by setting `DIR` environment variable.
+
+### Library:
 
 ```sh
 $ go get github.com/danvergara/seeder
