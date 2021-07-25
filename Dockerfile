@@ -14,14 +14,19 @@ COPY . .
 ARG TARGETOS
 ARG TARGETARCH
 
-RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH}  go build -o seeder .
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 go build -o seeder .
 
 RUN make install-migrate
 
-FROM scratch AS bin
+FROM alpine:3.14 AS bin
+
+RUN apk add --no-cache ca-certificates
 
 LABEL org.opencontainers.image.documentation="https://github.com/danvergara/seeder" \
 	org.opencontainers.image.source="https://github.com/danvergara/seeder" \
 	org.opencontainers.image.title="seeder"
 
-COPY --from=builder /src/app/seeder /bin/seeder
+COPY --from=builder /src/app/seeder /usr/local/bin/seeder
+RUN ln -s /usr/local/bin/seeder /seeder
+
+ENTRYPOINT [ "seeder" ]

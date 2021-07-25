@@ -6,7 +6,7 @@ install-migrate:
 .PHONY: build
 ## build: Builds the Go program
 build:
-	go build -o seeder ./cli
+	CGO_ENABLED=0 go build -o seeder ./cli
 
 run: build
 .PHONY: up
