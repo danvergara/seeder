@@ -14,7 +14,7 @@ COPY . .
 ARG TARGETOS
 ARG TARGETARCH
 
-RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 go build -o seeder .
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 go build -o seeder ./cli
 
 RUN make install-migrate
 
