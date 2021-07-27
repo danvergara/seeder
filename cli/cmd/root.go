@@ -18,8 +18,8 @@ limitations under the License.
 package cmd
 
 import (
-	"bytes"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -38,12 +38,13 @@ func NewRootCmd() *cobra.Command {
 		Long: `Seeder is a ClI tool and Golang library that helps to
 seeds databases using golang code. ORM or SQL driver agnostic.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var out bytes.Buffer
-
 			c := exec.Command("go", "run", fmt.Sprint(path, "/", "main.go"))
-			c.Stdout = &out
+
+			c.Stdout = os.Stdout
+			c.Stderr = os.Stderr
 
 			if err := c.Run(); err != nil {
+				log.Printf("error %s", err)
 				return err
 			}
 
