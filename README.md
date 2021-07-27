@@ -53,8 +53,6 @@ $ go get github.com/danvergara/seeder
 
 ## Help
 
-
-
 ```
 Seeder is a ClI tool and Golang library that helps to
 seeds databases using golang code. ORM or SQL driver agnostic.
@@ -222,6 +220,18 @@ You can skip the --path flag is yout main is located at `db/main.go`. The recomm
         ├── roles.go
         ├── seeds.go
         └── users.go
+```
+
+### Docker Usage
+
+```sh
+$ docker run -v "$(pwd):/seeder" seeder --path path/to/main.go
+```
+
+If you neeed set to up environment variables to connect with the database:
+
+```sh
+$ docker run -v "$(pwd):/seeder" --network host -e DB_HOST='localhost' -e DB_USER='postgres' -e DB_PASSWORD='password' -e DB_NAME='users' -e DB_PORT='5432' -e DB_DRIVER='postgres' seeder --path path/to/main.go
 ```
 
 ## Contribute
