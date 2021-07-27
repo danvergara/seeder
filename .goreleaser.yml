@@ -59,13 +59,13 @@ brews:
 
     # Your app's description.
     # Default is empty.
-    description: "Database seeds. CLI and Golang library."
-
-    # SPDX identifier of your app's license.
-    # Default is empty.
-    license: "Apache-2.0"
+    description: "Database seeds. CLI and Golang library"
 
     # Packages your package depends on.
     dependencies:
       - name: git
       - name: go
+
+    # SPDX identifier of your app's license.
+    # Default is empty.
+    license: "Apache-2.0"
