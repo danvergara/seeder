@@ -5,13 +5,15 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/danvergara/seeder"
-	"github.com/danvergara/seeder/db/seeds"
+	"github.com/danvergara/seeder/example/seeds"
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 
 	// postgres driver for testing.
+	txdb "github.com/DATA-DOG/go-txdb"
 	_ "github.com/lib/pq"
 )
 
@@ -29,6 +31,8 @@ func TestMain(m *testing.M) {
 	host = os.Getenv("DB_HOST")
 	port = os.Getenv("DB_PORT")
 	dbname = os.Getenv("DB_NAME")
+
+	txdb.Register("pgsqltx", "postgres", fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, password, host, port, dbname))
 
 	os.Exit(m.Run())
 }
@@ -85,7 +89,10 @@ func TestExecuteRealDB(t *testing.T) {
 		log.Fatalf("error opening a connection with the database: %s\n", err)
 	}
 
-	defer db.Close()
+	t.Cleanup(func() {
+		db.MustExec("TRUNCATE users, roles, products CASCADE;")
+		db.Close()
+	})
 
 	db.MustExec("TRUNCATE users, roles, products CASCADE;")
 
@@ -111,6 +118,154 @@ func TestExecuteRealDB(t *testing.T) {
 
 	err = db.Get(&count, `SELECT COUNT(*) FROM products`)
 	if err != nil {
+		t.Errorf("error getting the number of products in db: %s\n", err)
+	}
+
+	assert.Equal(t, 100, count)
+}
+
+func TestExecuteParallelDB(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	for i := 0; i <= 10; i++ {
+		t.Run(fmt.Sprintf("test #%d", i), func(t *testing.T) {
+			t.Parallel()
+
+			var count int
+
+			cName := fmt.Sprintf("connection_%d", time.Now().UnixNano())
+			db, _ := sqlx.Open("pgsqltx", cName)
+
+			db.MustExec("TRUNCATE users, roles, products CASCADE;")
+
+			s := seeds.NewSeed(db)
+
+			if err := seeder.Execute(s); err != nil {
+				t.Errorf("error seeding the db at running tests: %s\n", err)
+			}
+
+			fmt.Printf("test #%d succeed", i)
+
+			if err := db.Get(&count, `SELECT COUNT(*) FROM roles`); err != nil {
+				t.Errorf("error getting the number of roles in db: %s\n", err)
+			}
+
+			assert.Equal(t, 2, count)
+
+			if err := db.Get(&count, `SELECT COUNT(*) FROM users`); err != nil {
+				t.Errorf("error getting the number of users in db: %s\n", err)
+			}
+
+			assert.Equal(t, 100, count)
+
+			if err := db.Get(&count, `SELECT COUNT(*) FROM products`); err != nil {
+				t.Errorf("error getting the number of products in db: %s\n", err)
+			}
+
+			assert.Equal(t, 100, count)
+
+			db.Close()
+		})
+	}
+}
+
+func TestExecuteGivenMethodName(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	var count int
+
+	url := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		user,
+		password,
+		host,
+		port,
+		dbname,
+	)
+
+	db, err := sqlx.Open("postgres", url)
+	if err != nil {
+		log.Fatalf("error opening a connection with the database: %s\n", err)
+	}
+
+	t.Cleanup(func() {
+		db.MustExec("TRUNCATE users, roles, products CASCADE;")
+		db.Close()
+	})
+
+	db.MustExec("TRUNCATE users, roles, products CASCADE;")
+
+	s := seeds.NewSeed(db)
+
+	if err := seeder.Execute(s, "RolesSeed"); err != nil {
+		t.Errorf("error seeding the db at running tests: %s\n", err)
+	}
+
+	err = db.Get(&count, `SELECT COUNT(*) FROM roles`)
+	if err != nil {
+		t.Errorf("error getting the number of roles in db: %s\n", err)
+	}
+
+	assert.Equal(t, 2, count)
+
+	err = db.Get(&count, `SELECT COUNT(*) FROM users`)
+	if err != nil {
+		t.Errorf("error getting the number of users in db: %s\n", err)
+	}
+
+	assert.Equal(t, 0, count)
+}
+
+func TestExecuteFunc(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	var count int
+
+	url := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		user,
+		password,
+		host,
+		port,
+		dbname,
+	)
+
+	db, err := sqlx.Open("postgres", url)
+	if err != nil {
+		log.Fatalf("error opening a connection with the database: %s\n", err)
+	}
+
+	t.Cleanup(func() {
+		db.MustExec("TRUNCATE users, roles, products CASCADE;")
+		db.Close()
+	})
+
+	db.MustExec("TRUNCATE users, roles, products CASCADE;")
+
+	if err := seeder.ExecuteFunc(db.DB, seeds.PopulateDB); err != nil {
+		t.Errorf("error seeding the db at running tests: %s\n", err)
+	}
+
+	err = db.Get(&count, `SELECT COUNT(*) FROM roles`)
+	if err != nil {
+		t.Errorf("error getting the number of roles in db: %s\n", err)
+	}
+
+	assert.Equal(t, 2, count)
+
+	if err := db.Get(&count, `SELECT COUNT(*) FROM users`); err != nil {
+		t.Errorf("error getting the number of users in db: %s\n", err)
+	}
+
+	assert.Equal(t, 100, count)
+
+	if err := db.Get(&count, `SELECT COUNT(*) FROM products`); err != nil {
 		t.Errorf("error getting the number of products in db: %s\n", err)
 	}
 
