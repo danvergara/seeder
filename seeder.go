@@ -32,7 +32,9 @@ func Execute(s interface{}, seedMethodNames ...string) error {
 
 	// Execute only the given method names
 	for _, item := range seedMethodNames {
-		seed(s, item)
+		if err := seed(s, item); err != nil {
+			return err
+		}
 	}
 
 	return nil
