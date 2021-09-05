@@ -2,13 +2,14 @@
 package seeder
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"reflect"
 )
 
 // Execute executes all the methods given a struct.
-func Execute(s interface{}) error {
+func Execute(s interface{}, seedMethodNames ...string) error {
 	sType := reflect.TypeOf(s)
 	sKind := sType.Kind()
 
@@ -16,12 +17,24 @@ func Execute(s interface{}) error {
 		return fmt.Errorf("receive a %s instead of a struct", sType.String())
 	}
 
-	for i := 0; i < sType.NumMethod(); i++ {
-		method := sType.Method(i)
-		if err := seed(s, method.Name); err != nil {
-			return err
+	// Execute all seeders if no method name is given.
+	if len(seedMethodNames) == 0 {
+		// We are looping over the method on a Seed struct.
+		for i := 0; i < sType.NumMethod(); i++ {
+			// Get the method in the current iteration.
+			method := sType.Method(i)
+			// Execute seeder.
+			if err := seed(s, method.Name); err != nil {
+				return err
+			}
 		}
 	}
+
+	// Execute only the given method names
+	for _, item := range seedMethodNames {
+		seed(s, item)
+	}
+
 	return nil
 }
 
