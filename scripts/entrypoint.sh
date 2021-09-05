@@ -14,4 +14,4 @@ echo "Running the migrations against the database"
 make migrate
 
 echo "Running the seeds against the database"
-./seeder
+./seeder -p ./example
