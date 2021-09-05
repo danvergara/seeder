@@ -8,10 +8,9 @@ install-migrate:
 build:
 	CGO_ENABLED=0 go build -o seeder ./cli
 
-run: build
 .PHONY: up
 ## up: Runs all the containers listed in the docker-compose.yml file
-up:
+up: build
 	docker-compose up --build -d
 
 .PHONY: down

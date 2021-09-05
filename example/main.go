@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/danvergara/seeder"
-	"github.com/danvergara/seeder/db/seeds"
+	"github.com/danvergara/seeder/example/seeds"
 	"github.com/jmoiron/sqlx"
 
 	// postgres driver.
