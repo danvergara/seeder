@@ -38,6 +38,12 @@ func Execute(s interface{}, seedMethodNames ...string) error {
 	return nil
 }
 
+// ExecuteFunc execute a function passing a functionat receives a database
+// pool of connections.
+func ExecuteFunc(db *sql.DB, f func(*sql.DB) error) error {
+	return f(db)
+}
+
 func seed(s interface{}, methodName string) error {
 	m := reflect.ValueOf(s).MethodByName(methodName)
 	if !m.IsValid() {
