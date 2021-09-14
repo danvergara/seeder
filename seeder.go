@@ -40,10 +40,16 @@ func Execute(s interface{}, seedMethodNames ...string) error {
 	return nil
 }
 
-// ExecuteFunc execute a function passing a functionat receives a database
-// pool of connections.
-func ExecuteFunc(db *sql.DB, f func(*sql.DB) error) error {
-	return f(db)
+// ExecuteFunc execute one of more functions to seed the database
+// using the same pool of connections.
+func ExecuteFunc(db *sql.DB, funcs ...func(*sql.DB) error) error {
+	for _, f := range funcs {
+		if err := f(db); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func seed(s interface{}, methodName string) error {
