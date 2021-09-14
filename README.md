@@ -68,7 +68,7 @@ Available Commands:
 
 Flags:
   -h, --help          help for seeder
-  -p, --path string    (default "/home/danvergara/Documents/goprojects/seeder/db")
+  -p, --path string    (default "path/to/db")
 
 Use "seeder [command] --help" for more information about a command.
 
@@ -79,6 +79,8 @@ Use "seeder [command] --help" for more information about a command.
 `seeder` is simple because it's flexible, actually we could define seeder as a tool that runs all the methods attached to a single entity at once.
 
 Here is the proposed pattern. Define an object and name it whatever you want. Then, add it a field called `db` with the database connection (pool of connections) from your favorite database library. In the example we chose `slqx`.
+
+## Execute function
 
 ```go
 // db/seeds/seeds.go
@@ -199,8 +201,120 @@ func main() {
 }
 ```
 
-There is two options to run the seeds:
+## ExecuteFunc function 
 
+In case you want to direclty work with an instance of `sql.DB` from `database/sql`, you can use `ExecuteFunc` which allows you to pass one or more functions to the `ExecuteFunc` function, along with a pointer to an instance of `sql.DB`.
+
+The functions you want to use to seed the database are required to have following signature:
+
+```go
+func(*sql.DB) error
+```
+
+```go
+// db/seeds/seeds.go 
+
+import (
+	"database/sql"
+	"math/rand"
+
+	"github.com/bxcodec/faker/v3"
+	"github.com/jmoiron/sqlx"
+)
+
+func PopulateDB(db *sql.DB) error {
+	var id int
+
+	// inserts roles.
+	if _, err := db.Exec(`INSERT INTO roles(name) VALUES ($1)`, "admin"); err != nil {
+		return err
+	}
+
+	if _, err := db.Exec(`INSERT INTO roles(name) VALUES ($1)`, "user"); err != nil {
+		return err
+	}
+
+	// inserts users with admin permissions.
+	if err := db.QueryRow(`SELECT id FROM roles WHERE name = 'admin'`).Scan(&id); err != nil {
+		return err
+	}
+
+	for i := 0; i < 50; i++ {
+		_, err := db.Exec(
+			`INSERT INTO users(username, first_name, last_name, role_id) VALUES ($1, $2, $3, $4)`,
+			faker.Username(),
+			faker.FirstName(),
+			faker.LastName(),
+			id,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// inserts users with regular permissions.
+	if err := db.QueryRow(`SELECT id FROM roles WHERE name = 'user'`).Scan(&id); err != nil {
+		return err
+	}
+
+	for i := 0; i < 50; i++ {
+		_, err := db.Exec(
+			`INSERT INTO users(username, first_name, last_name, role_id) VALUES ($1, $2, $3, $4)`,
+			faker.Username(),
+			faker.FirstName(),
+			faker.LastName(),
+			id,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	// inserts products.
+	for i := 0; i < 100; i++ {
+		var err error
+
+		if _, err = db.Exec(
+			`INSERT INTO products(name, price) VALUES ($1, $2)`, faker.Word(), rand.Float32(),
+		); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+```
+
+This time, you can pass the function defined previously to `ExecuteFunc`, along with your database connection.
+
+```go
+//  db/main.go
+import (
+	"log"
+
+	"github.com/danvergara/seeder/db/seeds"
+	"github.com/danvergara/seeder"
+	"github.com/jmoiron/sqlx"
+
+	// postgres driver.
+	_ "github.com/lib/pq"
+)
+
+func main() {
+	db, err := sqlx.Open("postgres", "postgres-url")
+	if err != nil {
+		log.Fatalf("error opening a connection with the database %s\n", err)
+	}
+
+	// Here's where you pass the functions you want to use to insert new records into the database.
+	if err := seeder.ExecuteFunc(db, seeds.PopulateDB); err != nil {
+		log.Fatalf("error seeding the db %s\n", err)
+	}
+}
+```
+
+## Instructions to run the seeds
+
+There is two options to run the seeds:
 
 1. Run or compile the main files as usual.
 
