@@ -1,10 +1,10 @@
-# seeder
+seeder ![unit tests](https://github.com/danvergara/seeder/actions/workflows/test.yaml/badge.svg) ![linters](https://github.com/danvergara/seeder/actions/workflows/lint.yaml/badge.svg) [![GitHub Release](https://img.shields.io/github/release/danvergara/seeder.svg)](https://github.com/danvergara/seeder/releases)
+=================
+<p align="center">
+  <img style="float: right;" src="assets/gopher-seeder.png" alt="Seeder logo"/  width=200>
+</p>
 
-Database seeds. CLI and Golang library.
-
-
-![unit tests](https://github.com/danvergara/seeder/actions/workflows/test.yaml/badge.svg)
-![linters](https://github.com/danvergara/seeder/actions/workflows/lint.yaml/badge.svg)
+__Database seeds. CLI and Golang library.__
 
 ## Overview
 
