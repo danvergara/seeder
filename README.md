@@ -200,6 +200,78 @@ func main() {
 	}
 }
 ```
+Unfortunately, due to `Seeder` uses reflection to guess the number and the name of the methods, the execution of methods is sorted in lexicographic order. So, if you chose this approach, make sure the order of the desired execution matches the lexicographic order of the defined methods. There's another way to deal with this limitation:
+
+```go
+import (
+	"log"
+	"math/rand"
+
+	"github.com/bxcodec/faker/v3"
+)
+
+func (s Seed) rolesSeed() {
+	var err error
+
+	_, err = s.db.Exec(`INSERT INTO roles(name) VALUES ($1)`, "admin")
+	if err != nil {
+		log.Fatalf("error seeding roles: %v", err)
+	}
+
+	_, err = s.db.Exec(`INSERT INTO roles(name) VALUES ($1)`, "user")
+	if err != nil {
+		log.Fatalf("error seeding roles: %v", err)
+	}
+}
+
+func (s Seed) usersSeed() {
+	var id int
+	var err error
+
+	err = s.db.Get(&id, `SELECT id FROM roles WHERE name = 'admin'`)
+	if err != nil {
+		log.Fatalf("error querying the roles table: %v", err)
+	}
+
+	for i := 0; i < 50; i++ {
+		_, err = s.db.Exec(`INSERT INTO users(username, first_name, last_name, role_id) VALUES ($1, $2, $3, $4)`, faker.Username(), faker.FirstName(), faker.LastName(), id)
+		if err != nil {
+			log.Fatalf("error seeding roles: %v", err)
+		}
+	}
+
+	err = s.db.Get(&id, `SELECT id FROM roles WHERE name = 'user'`)
+	if err != nil {
+		log.Fatalf("error querying the roles table: %v", err)
+	}
+
+	for i := 0; i < 50; i++ {
+		_, err = s.db.Exec(`INSERT INTO users(username, first_name, last_name, role_id) VALUES ($1, $2, $3, $4)`, faker.Username(), faker.FirstName(), faker.LastName(), id)
+		if err != nil {
+			log.Fatalf("error seeding roles: %v", err)
+		}
+	}
+}
+
+func (s Seed) productsSeed() {
+	for i := 0; i < 100; i++ {
+		var err error
+
+		_, err = s.db.Exec(`INSERT INTO products(name, price) VALUES ($1, $2)`, faker.Word(), rand.Float32())
+		if err != nil {
+			log.Fatalf("error seeding products: %v", err)
+		}
+	}
+}
+
+func (s Seed) PopulateDB() {
+	s.rolesSeed()
+	s.usersSeed()
+	s.productsSeed()
+}
+```
+
+By making the methods unexported and defining them in a specific order in another exported method, bypassing the limitation imposed by the `reflect` package.
 
 ## ExecuteFunc function 
 
