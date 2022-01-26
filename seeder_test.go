@@ -90,6 +90,30 @@ func assertDBContent(t *testing.T, db *sqlx.DB) {
 	assert.Equal(t, 100, count)
 }
 
+func assertDEmptyBContent(t *testing.T, db *sqlx.DB) {
+	t.Helper()
+
+	var count int
+
+	if err := db.Get(&count, `SELECT COUNT(*) FROM roles`); err != nil {
+		t.Errorf("error getting the number of roles in db: %s\n", err)
+	}
+
+	assert.Equal(t, 0, count)
+
+	if err := db.Get(&count, `SELECT COUNT(*) FROM users`); err != nil {
+		t.Errorf("error getting the number of users in db: %s\n", err)
+	}
+
+	assert.Equal(t, 0, count)
+
+	if err := db.Get(&count, `SELECT COUNT(*) FROM products`); err != nil {
+		t.Errorf("error getting the number of products in db: %s\n", err)
+	}
+
+	assert.Equal(t, 0, count)
+}
+
 type Foo struct{}
 
 func (f Foo) Bar()       {}
@@ -133,6 +157,46 @@ func TestExecuteRealDB(t *testing.T) {
 	if err := seeder.Execute(s); err != nil {
 		t.Errorf("error seeding the db at running tests: %s\n", err)
 	}
+
+	assertDBContent(t, db)
+}
+
+func TestExecuteRealDBTxRollback(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	db := prepareDB(t)
+	tx, _ := db.Beginx()
+
+	s := seeds.NewSeedTxWithError(tx)
+
+	if err := seeder.Execute(s); err != nil {
+		_ = tx.Rollback()
+		assertDEmptyBContent(t, db)
+		return
+	}
+
+	t.Error("the seeding process did not throw an error as expected")
+}
+
+func TestExecuteRealDBTx(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	db := prepareDB(t)
+
+	tx, _ := db.Beginx()
+
+	s := seeds.NewSeedTx(tx)
+
+	if err := seeder.Execute(s); err != nil {
+		_ = tx.Rollback()
+		t.Errorf("error seeding the db at running tests: %s\n", err)
+	}
+
+	_ = tx.Commit()
 
 	assertDBContent(t, db)
 }
