@@ -273,6 +273,63 @@ func (s Seed) PopulateDB() {
 
 By making the methods unexported and defining them in a specific order in another exported method, bypassing the limitation imposed by the `reflect` package.
 
+This approach has a problem we recently spotted and which is that if an insertion errors out, the previous insertions can't be rollback. To tackle this problem down, we can use TXs.
+
+```go
+// db/seeds/seeds.go
+package seeds
+
+import "github.com/jmoiron/sqlx"
+
+// Seed struct.
+type Seed struct {
+	tx *sqlx.Tx
+}
+
+// NewSeed return a Seed with a pool of connection to a dabase.
+func NewSeed(tx *sqlx.Tx) Seed {
+	return Seed{
+		tx: tx,
+	}
+}
+```
+Then, handle the tx based on the error value:
+
+```go
+//  db/main.go
+import (
+	"log"
+
+	"github.com/danvergara/seeder/db/seeds"
+	"github.com/danvergara/seeder"
+	"github.com/jmoiron/sqlx"
+
+	// postgres driver.
+	_ "github.com/lib/pq"
+)
+
+func main() {
+	db, err := sqlx.Open("postgres", "postgres-url")
+	if err != nil {
+		log.Fatalf("error opening a connection with the database %s\n", err)
+	}
+
+	tx, err := db.Beginx()
+	if err != nil {
+		log.Fatalf("error creating a tx %s\n", err)
+	}
+
+	s := seeds.NewSeed(tx)
+
+	if err := seeder.Execute(s); err != nil {
+        tx.Rollback()
+	}
+
+    tx.Commit()
+}
+```
+
+
 ## ExecuteFunc function 
 
 In case you want to direclty work with an instance of `sql.DB` from `database/sql`, you can use `ExecuteFunc` which allows you to pass one or more functions to the `ExecuteFunc` function, along with a pointer to an instance of `sql.DB`.
@@ -379,6 +436,39 @@ func main() {
 
 	// Here's where you pass the functions you want to use to insert new records into the database.
 	if err := seeder.ExecuteFunc(db, seeds.PopulateDB); err != nil {
+		log.Fatalf("error seeding the db %s\n", err)
+	}
+}
+```
+
+In the same spirit of bringing alternatives to handle TXs, a new function has been added to the to public API, which is `ExecuteTxFunc` and it accepts a `Tx` as a parameter, along with a list of functions which accept TXs, too.
+Try this out:
+```go
+//  db/main.go
+import (
+	"log"
+
+	"github.com/danvergara/seeder/db/seeds"
+	"github.com/danvergara/seeder"
+	"github.com/jmoiron/sqlx"
+
+	// postgres driver.
+	_ "github.com/lib/pq"
+)
+
+func main() {
+	db, err := sqlx.Open("postgres", "postgres-url")
+	if err != nil {
+		log.Fatalf("error opening a connection with the database %s\n", err)
+	}
+
+	tx, err := db.Begin()
+	if err != nil {
+		log.Fatalf("error creating a tx %s\n", err)
+	}
+
+	// Here's where you pass the functions you want to use to insert new records into the database.
+	if err := seeder.ExecuteTxFunc(tx, seeds.PopulateTx); err != nil {
 		log.Fatalf("error seeding the db %s\n", err)
 	}
 }
