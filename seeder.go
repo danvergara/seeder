@@ -59,7 +59,14 @@ func seed(s interface{}, methodName string) error {
 	}
 
 	log.Println("seeding ", methodName, "...")
-	m.Call(nil)
+
+	values := m.Call(nil)
+	for _, v := range values {
+		if err, ok := v.Interface().(error); ok && err != nil {
+			return err
+		}
+	}
+
 	log.Println("seed ", methodName, "succeed")
 
 	return nil
