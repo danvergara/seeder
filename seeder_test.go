@@ -258,6 +258,26 @@ func TestExecuteGivenMethodName(t *testing.T) {
 	assert.Equal(t, 0, count)
 }
 
+func TestExecuteTxFunc(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping short mode")
+	}
+
+	db := prepareDB(t)
+	tx, err := db.Begin()
+	if err != nil {
+		t.Error("error creating a tx")
+	}
+
+	if err := seeder.ExecuteTxFunc(tx, seeds.PopulateTx); err != nil {
+		t.Errorf("error seeding the db at running tests: %s\n", err)
+	}
+
+	_ = tx.Commit()
+
+	assertDBContent(t, db)
+}
+
 func TestExecuteFunc(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping short mode")
