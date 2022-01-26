@@ -52,6 +52,18 @@ func ExecuteFunc(db *sql.DB, funcs ...func(*sql.DB) error) error {
 	return nil
 }
 
+// ExecuteTxFunc execute one of more functions to seed the database
+// using the same pool of connections.
+func ExecuteTxFunc(tx *sql.Tx, funcs ...func(*sql.Tx) error) error {
+	for _, f := range funcs {
+		if err := f(tx); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func seed(s interface{}, methodName string) error {
 	m := reflect.ValueOf(s).MethodByName(methodName)
 	if !m.IsValid() {
