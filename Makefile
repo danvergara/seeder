@@ -3,14 +3,9 @@
 install-migrate:
 	./scripts/install_migrate.sh
 
-.PHONY: build
-## build: Builds the Go program
-build:
-	CGO_ENABLED=0 go build -o seeder ./cli
-
 .PHONY: up
 ## up: Runs all the containers listed in the docker-compose.yml file
-up: build
+up:
 	docker-compose up --build -d
 
 .PHONY: down
@@ -42,11 +37,6 @@ int-test:
 ## migrate: Runs the migrations
 migrate:
 	migrate -source file://db/migrations -database "postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" up
-
-.PHONY: run
-## run: Runs the application
-run: build
-	./seeder
 
 .PHONY: help
 ## help: Prints this help message
