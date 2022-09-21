@@ -3,7 +3,7 @@ package seeds
 import (
 	"math/rand"
 
-	"github.com/bxcodec/faker/v3"
+	faker "github.com/bxcodec/faker/v3"
 	"github.com/jmoiron/sqlx"
 )
 

@@ -3,7 +3,7 @@ package seeds
 import (
 	"log"
 
-	"github.com/bxcodec/faker/v3"
+	faker "github.com/bxcodec/faker/v3"
 )
 
 // UsersSeed seeds roles data.

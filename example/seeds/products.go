@@ -4,7 +4,7 @@ import (
 	"log"
 	"math/rand"
 
-	"github.com/bxcodec/faker/v3"
+	faker "github.com/bxcodec/faker/v3"
 )
 
 // ProductsSeed seeds product data.
