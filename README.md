@@ -4,46 +4,22 @@ seeder ![unit tests](https://github.com/danvergara/seeder/actions/workflows/test
   <img style="float: right;" src="assets/gopher-seeder.png" alt="Seeder logo"/  width=200>
 </p>
 
-__Database seeds. CLI and Golang library.__
+__Insert records into a database programmatically.__
 
 ## Overview
 
-Seeder is an agnostic cli and library intended to seeds databases using Go code.
+Seeder is a tool used to insert records into your relational database programmatically.
 
 ## Features
 
 * Driver agnostic (you can choose whatever database driver you want)
 * sql builder or ORM agnostic (you can run your seeds no matter what library you choose)
-* Flexibility (you can use seeder either as cli tool or as library and included it in your codebase)
 
 ## Installation
 
 ### CLI:
-### Homebrew
 
-It works with Linux, too.
-
-```
-$ brew install danvergara/tools/seeder
-```
-
-Or
-
-```
-$ brew tap danvergara/tools
-$ brew install seeder
-```
-
-### Binary Release (Linux/OSX/Windows)
-You can manually download a binary release from [the release page](https://github.com/danvergara/seeder/releases).
-
-Automated install/update, don't forget to always verify what you're piping into bash:
-
-```sh
-curl https://raw.githubusercontent.com/danvergara/seeder/master/scripts/install_update_linux.sh | bash
-```
-
-The script installs downloaded binary to `/usr/local/bin` directory by default, but it can be changed by setting `DIR` environment variable.
+> **_NOTE:_** The support for the CLI has been deprecated. After a year of actually using the tool, I've realized that this feature is pointless. The user might be better off running their main files by themselves or compiling custom binaries for specific use cases.
 
 ### Library:
 
@@ -51,36 +27,17 @@ The script installs downloaded binary to `/usr/local/bin` directory by default, 
 $ go get github.com/danvergara/seeder
 ```
 
-## Help
-
-```
-Seeder is a ClI tool and Golang library that helps to
-seeds databases using golang code. ORM or SQL driver agnostic.
-
-Usage:
-  seeder [flags]
-  seeder [command]
-
-Available Commands:
-  completion  generate the autocompletion script for the specified shell
-  help        Help about any command
-  version     A brief description of your command
-
-Flags:
-  -h, --help          help for seeder
-  -p, --path string    (default "path/to/db")
-
-Use "seeder [command] --help" for more information about a command.
-
-```
-
 ## Usage
 
-`seeder` is simple because it's flexible, actually we could define seeder as a tool that runs all the methods attached to a single entity at once.
+The library provides a set of functions as the API:
 
-Here is the proposed pattern. Define an object and name it whatever you want. Then, add it a field called `db` with the database connection (pool of connections) from your favorite database library. In the example we chose `slqx`.
+* Excute
+* ExecuteFunc
+* ExecuteTxFunc
 
-## Execute function
+## Execute
+
+Create an struct and define methods used to insert records into the database on that object.
 
 ```go
 // db/seeds/seeds.go
@@ -101,7 +58,7 @@ func NewSeed(db *sqlx.DB) Seed {
 }
 ```
 
-Now you can insert the rows you need using go code and the database library you prefer. In this example we use [faker](https://github.com/bxcodec/faker) to generate random data.
+This example uses [faker](https://github.com/bxcodec/faker) to generate random data.
 
 ```go
 // db/seeds/roles.go
@@ -199,6 +156,7 @@ func main() {
 		log.Fatalf("error seeding the db %s\n", err)
 	}
 }
+
 ```
 Unfortunately, due to `Seeder` uses reflection to guess the number and the name of the methods, the execution of methods is sorted in lexicographic order. So, if you chose this approach, make sure the order of the desired execution matches the lexicographic order of the defined methods. There's another way to deal with this limitation:
 
@@ -330,11 +288,11 @@ func main() {
 ```
 
 
-## ExecuteFunc function 
+## ExecuteFunc
 
-In case you want to direclty work with an instance of `sql.DB` from `database/sql`, you can use `ExecuteFunc` which allows you to pass one or more functions to the `ExecuteFunc` function, along with a pointer to an instance of `sql.DB`.
+In case you want to direclty work with an instance of `sql.DB` from `database/sql`, you can use `ExecuteFunc` which allows you to pass one or more functions to the `ExecuteFunc` function, along with a pointer to a `sql.DB` instance.
 
-The functions you want to use to seed the database are required to have following signature:
+The functions you use to seed the database need to have the following signature:
 
 ```go
 func(*sql.DB) error
@@ -413,7 +371,7 @@ func PopulateDB(db *sql.DB) error {
 }
 ```
 
-This time, you can pass the function defined previously to `ExecuteFunc`, along with your database connection.
+Now, you can pass the function previously define to `ExecuteFunc`, along with your database connection.
 
 ```go
 //  db/main.go
@@ -441,7 +399,10 @@ func main() {
 }
 ```
 
-In the same spirit of bringing alternatives to handle TXs, a new function has been added to the to public API, which is `ExecuteTxFunc` and it accepts a `Tx` as a parameter, along with a list of functions which accept TXs, too.
+## EexcuteTxFunc
+
+The function recieves a `Tx` as a parameter, along with a list of functions which accept TXs, too.
+
 Try this out:
 ```go
 //  db/main.go
@@ -478,15 +439,11 @@ func main() {
 
 There is two options to run the seeds:
 
-1. Run or compile the main files as usual.
-
-2. Run the cli utility:
+1. Run the main file:
 
 ```sh
-$ seeder --path path/to/main.go
+$ go run ./example/main.go
 ```
-
-You can skip the --path flag is yout main is located at `db/main.go`. The recommended project structure for seeds is the following (this isn't set in stone, suggestions are welcome):
 
 ```
  └── db
@@ -498,16 +455,10 @@ You can skip the --path flag is yout main is located at `db/main.go`. The recomm
         └── users.go
 ```
 
-### Docker Usage
+2. Compile the project:
 
 ```sh
-$ docker run -v "$(pwd):/seeder" seeder --path path/to/main.go
-```
-
-If you neeed set to up environment variables to connect with the database:
-
-```sh
-$ docker run -v "$(pwd):/seeder" --network host -e DB_HOST='localhost' -e DB_USER='postgres' -e DB_PASSWORD='password' -e DB_NAME='users' -e DB_PORT='5432' -e DB_DRIVER='postgres' seeder --path path/to/main.go
+$ cd example && go build && ./example
 ```
 
 ## Contribute
